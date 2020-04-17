@@ -16,6 +16,10 @@ import multiprocessing.dummy as multiprocessing
 from osgeo import gdal,ogr,gdal_array
 import matplotlib.pyplot as plt
 
+# 中文路径
+gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "NO")
+# 中文属性表
+gdal.SetConfigOption("SHAPE_ENCODING", "")
 
 def colorAlign_singleBand(arr,value_list,mask):
     # 单波段的颜色查询
@@ -32,7 +36,7 @@ def colorAlign_singleBand(arr,value_list,mask):
             idx_list.append(idx)        
     return idx_list
         
-def Search(map_path,value_list=[251,251,250],type='tif'):
+def Search(map_path,value_list=[251,251,250],type='tif',filt=True):
     # 查找对应颜色并转换成掩膜
     data = gdal.Open(map_path)
     im_w = data.RasterXSize
@@ -52,7 +56,7 @@ def Search(map_path,value_list=[251,251,250],type='tif'):
     infor_dict = dict(proj = im_proj,transform = im_transform, w =im_w, h=im_h)
     return mask.reshape(im_h,im_w),infor_dict
 
-def savetif(outpath,arr,info_dict,type='GTiff'):
+def savetif(outpath,arr,info_dict,type='GTiff',filt=True,filt_dic=None):
     # 保存tif文件
     driver = gdal.GetDriverByName(type)
     new_raster = driver.Create(outpath,info_dict['w'],info_dict['h'],
@@ -61,12 +65,40 @@ def savetif(outpath,arr,info_dict,type='GTiff'):
     new_raster.SetProjection(info_dict['proj'])
     raster_band = new_raster.GetRasterBand(1)
     raster_band.WriteArray(arr)
+    if filt:
+        _ = gdal.SieveFilter(raster_band,None,raster_band,filt_dic['thresold'],filt_dic['connectness'])
 
+def maskPostProcessing(mask_path):
+#     TODO 使用形态学滤波过滤mask，网址 https://www.cnblogs.com/denny402/p/5132677.html
+    pass
 
+def Raster2Poly(tif_path, out_shp_path):
+    """ 矢量化栅格 """
+    ds = gdal.Open(tif_path, gdal.GA_ReadOnly)
+    if not ds:
+        print('%s 打开失败' % (tif_path))
+        return
+    srcband = ds.GetRasterBand(1)
+    maskband = srcband.GetMaskBand()
+
+    drv = ogr.GetDriverByName('ESRI Shapefile')
+    dst_ds = drv.CreateDataSource(out_shp_path)
+    srs = None
+    dst_layername = 'label'
+    dst_layer = dst_ds.CreateLayer(dst_layername, srs=srs)
+    dst_fieldname = 'DN'
+    fd = ogr.FieldDefn(dst_fieldname, ogr.OFTInteger)
+    dst_layer.CreateField(fd)
+    dst_field = 0
+    options = []
+    gdal.Polygonize(srcband, maskband, dst_layer, dst_field, options)
 
 if __name__ == "__main__":
+    filt_dic = dict(thresold=100,connectness=4)
     mask,info = Search(r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\Level18\ditu.tif')
-    savetif(r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\mask.tif',mask,info)
+    savetif(r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\mask100.tif',mask,info,filt_dic=filt_dic)
+    # Raster2Poly(r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\mask.tif',
+    #             r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\mask.shp')
     # plt.imshow(mask)
     # plt.show()
     
