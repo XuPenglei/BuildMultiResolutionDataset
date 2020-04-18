@@ -15,6 +15,7 @@ import numpy as np
 import multiprocessing.dummy as multiprocessing
 from osgeo import gdal,ogr,gdal_array
 import matplotlib.pyplot as plt
+import skimage.morphology as sm
 
 # 中文路径
 gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "NO")
@@ -68,10 +69,6 @@ def savetif(outpath,arr,info_dict,type='GTiff',filt=True,filt_dic=None):
     if filt:
         _ = gdal.SieveFilter(raster_band,None,raster_band,filt_dic['thresold'],filt_dic['connectness'])
 
-def maskPostProcessing(mask_path):
-#     TODO 使用形态学滤波过滤mask，网址 https://www.cnblogs.com/denny402/p/5132677.html
-    pass
-
 def Raster2Poly(tif_path, out_shp_path):
     """ 矢量化栅格 """
     ds = gdal.Open(tif_path, gdal.GA_ReadOnly)
@@ -94,13 +91,23 @@ def Raster2Poly(tif_path, out_shp_path):
     gdal.Polygonize(srcband, maskband, dst_layer, dst_field, options)
 
 if __name__ == "__main__":
-    filt_dic = dict(thresold=100,connectness=4)
-    mask,info = Search(r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\Level18\ditu.tif')
-    savetif(r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\mask100.tif',mask,info,filt_dic=filt_dic)
-    # Raster2Poly(r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\mask.tif',
-    #             r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\mask.shp')
-    # plt.imshow(mask)
-    # plt.show()
+    import time
+    t0 = time.time()
+    filt_dic = dict(thresold=40,connectness=8)
+    build_colors = [[251,251,250],[249,250,243],[252,252,251]]
+    mask = None
+    for bc in build_colors:
+        if mask is not None:
+            mask_t, info = Search(r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\Level18\ditu.tif',
+                                  filt=True,value_list=bc)
+            mask = np.logical_or(mask,mask_t)
+        else:
+            mask,info = Search(r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\Level18\ditu.tif',
+                               filt=True,
+                               value_list=bc)
+    savetif(r'C:\Users\XuPenglei\Desktop\test\17-12-6\ditu\maskMultiColor.tif',mask,info,filt_dic=filt_dic)
+    t1 = time.time()
+    print(t1-t0)
     
 
 
