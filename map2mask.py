@@ -6,7 +6,7 @@
 @Author  :   Xu Penglei 
 @Version :   1.0
 @Contact :   xupenglei87@163.com
-@Desc    :   None
+@Desc    :   将地图中的建筑物通过RGB的对应图斑提取出来
 '''
 
 # here put the import lib
