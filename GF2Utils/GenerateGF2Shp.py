@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-@ Time    : 2020/6/18 14:49
+@ Time    : 2020/6/19 11:58
 @ Author  : Xu Penglei
 @ Email   : xupenglei87@163.com
-@ File    : makeShp.py
-@ Desc    : 从其他文件格式中生成Shp文件
+@ File    : GenerateGF2Shp.py
+@ Desc    : 由统计的高分2数据情况成成覆盖区域的shp文件
 """
 
 try:
@@ -17,20 +17,23 @@ except:
 import os
 import numpy as np
 import json
+from xpinyin import Pinyin
 # 支持中文路径
 gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8","NO")
 # 支持中文属性表字段
 gdal.SetConfigOption("SHAPE_ENCODING", "")
 
-def writeRecShpFile(extentDictJson,outPath,EPSG=4326):
+p = Pinyin()
+def writeRecShpFile(GF2Json, outPath, EPSG=4326):
     """
     将字典形式的矩形范围写入Shp文件当中
-    :param extentDictJson: 字典形式矩阵范围的Json文件，格式为{GridName:[左上经，左上纬，右下经，右下纬]}
+    :param GF2Json: 字典形式矩阵范围的Json文件，格式为{GridName:[左上经，左上纬，右下经，右下纬]}
     :param outPath: 输出shp路径
     :return: None
     """
-    with open(extentDictJson,'r') as f:
+    with open(GF2Json, 'r') as f:
         extentDict = json.load(f)
+
     ogr.RegisterAll()
     strDriverName = "ESRI Shapefile"
     oDriver = ogr.GetDriverByName(strDriverName)
@@ -55,24 +58,26 @@ def writeRecShpFile(extentDictJson,outPath,EPSG=4326):
     oFieldName = ogr.FieldDefn('GridName',ogr.OFTString)
     oFieldName.SetWidth(100)
     oLayer.CreateField(oFieldName,1)
-    for i,(k,v) in enumerate(extentDict.items()):
-        print('Writing %s'%(k))
-        feature = ogr.Feature(oLayer.GetLayerDefn())
-        # feature.SetField(0,i)
-        feature.SetField(0,k)
-        wkt = 'POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))'%(
-            v[0],v[1],v[0],v[3],v[2],v[3],v[2],v[1],v[0],v[1]
-        )
-        geoRec = ogr.CreateGeometryFromWkt(wkt)
-        feature.SetGeometry(geoRec)
-        oLayer.CreateFeature(feature)
-        feature=None
+    for c,(k,v) in enumerate(extentDict.items()):
+        for i,j in enumerate(v):
+            print('Writing %s %d'%(k,i+1))
+            extent = j['WGSExtent']
+            feature = ogr.Feature(oLayer.GetLayerDefn())
+            # feature.SetField(0,i)
+            feature.SetField(0,p.get_pinyin(k,'')+str(i+1))
+            wkt = 'POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))'%(
+                extent[0],extent[1],extent[0],extent[3],
+                extent[2],extent[3],extent[2],extent[1],extent[0],extent[1]
+            )
+            geoRec = ogr.CreateGeometryFromWkt(wkt)
+            feature.SetGeometry(geoRec)
+            oLayer.CreateFeature(feature)
+            feature=None
     oDS.Destroy()
+    print("%d 个城市已被统计！"%(c+1))
     print("shp文件生成完成!")
 
 if __name__ == '__main__':
-    extentJson = r'F:\Data\2.5TO10\数据说明及地理信息找回\AllSamplesGeoExtent.json'
-    outShp = r'F:\Data\2.5TO10\SamplesShp\AllSamples.shp'
-    writeRecShpFile(extentJson,outShp)
-
-
+    GF2Json = r'GF2Info.json'
+    outPath = r'E:\Projects\BuildMultiResolutionDataset\GF2Utils\GF2Shp\GF2Extent.shp'
+    writeRecShpFile(GF2Json,outPath)
