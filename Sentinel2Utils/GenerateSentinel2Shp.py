@@ -76,6 +76,6 @@ def writeRecShpFile(GF2Json, outPath, EPSG=4326):
     print("shp文件生成完成!")
 
 if __name__ == '__main__':
-    Sentinel2Json = r'E:\Projects\BuildMultiResolutionDataset\Sentinel2Utils\Sentinel2WholeIMGInfo.json'
-    outPath = r'E:\Projects\BuildMultiResolutionDataset\Sentinel2Utils\Sentinel2Shp\Sentinel2Extent.shp'
+    Sentinel2Json = r'E:\Projects\BuildMultiResolutionDataset\Sentinel2Utils\TestWithoutLabelSentinel2WholeIMGInfo.json'
+    outPath = r'E:\Projects\BuildMultiResolutionDataset\Sentinel2Utils\Sentinel2Shp\TestWithoutLabelSentinel2Extent.shp'
     writeRecShpFile(Sentinel2Json,outPath)
