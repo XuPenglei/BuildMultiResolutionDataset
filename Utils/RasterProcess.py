@@ -10,6 +10,8 @@
 from osgeo import gdal,osr,ogr
 import numpy as np
 import cv2
+import warnings
+warnings.filterwarnings('ignore')
 
 class RasterProcessor(object):
     def __init__(self):
@@ -24,7 +26,9 @@ class RasterProcessor(object):
         :return: 栅格坐标
         """
         ulLon, ulLat, LonInterval, LatInterval = geomat[0],geomat[3],geomat[1],geomat[5]
-        return round((geoPoint[0]-ulLon)/LonInterval),round((geoPoint[1]-ulLat)/LatInterval)
+        x,y = round((geoPoint[0]-ulLon)/LonInterval),round((geoPoint[1]-ulLat)/LatInterval)
+
+        return x if x>=0 else 0, y if y>=0 else 0
 
     def clip(self, raster, UpperLeft, BottomRight, wh=None):
         """

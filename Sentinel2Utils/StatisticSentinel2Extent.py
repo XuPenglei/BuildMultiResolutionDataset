@@ -59,7 +59,7 @@ def GetInfoFromFolder(folder):
     :param folder: 需要统计的文件夹，组织形式为 folder/tif
     :return: infoDict: {city:[dict,dict,...]}
     """
-    dirList = [d for d in os.listdir(folder)]
+    dirList = [d for d in os.listdir(folder) if d.split('.')[-1]=='tif']
     infoDict = {}
     for d in dirList:
         city = d.split('.')[0]
@@ -79,8 +79,8 @@ def GetInfoFromFolder(folder):
     return infoDict
 
 if __name__ == '__main__':
-    folder = r'/home/tang/桌面/UNETbuilding/data10/imageFloat0To1'
-    outJson = r'Sentinel2WholeIMGInfo.json'
+    folder = r'F:\Data\ZT_SRDataset\四个定量精度评价区\IMG2p5'
+    outJson = r'Sentinel2Test4.json'
     InfoDict = GetInfoFromFolder(folder)
     writeJson(InfoDict,outJson)
 
