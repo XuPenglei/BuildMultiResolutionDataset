@@ -11,6 +11,8 @@ from osgeo import gdal,ogr,osr
 import json
 from glob import glob
 import os
+import xmltodict
+from tqdm import tqdm
 
 def writeJson(data,path):
     with open(path,'w') as f:
@@ -78,11 +80,37 @@ def GetInfoFromFolder(folder):
 
     return infoDict
 
+def GetInfoFromXML_InDir(baseDir):
+    infoDict={}
+    def XMLparser(xmlfile):
+        with open(xmlfile,'r') as f:
+            xml_str = f.read()
+        return xmltodict.parse(xml_str)
+    dirs = [n for n in os.listdir(baseDir) if '.tar' not in n]
+    for d in tqdm(dirs):
+        xml_file = [n for n in os.listdir(os.path.join(baseDir,d)) if '.xml' in n and 'MSS' in n]
+        if len(xml_file)==0:
+            print(d)
+            continue
+        else:
+            xml_file=xml_file[0]
+        xml_dict = XMLparser(os.path.join(baseDir,d,xml_file))['ProductMetaData']
+        infoDict.update({d:[{'WGSExtent':[float(xml_dict['TopLeftLongitude']),
+                            float(xml_dict['TopLeftLatitude']),
+                            float(xml_dict['BottomRightLongitude']),
+                            float(xml_dict['BottomRightLatitude'])]}]})
+    return infoDict
+
 if __name__ == '__main__':
-    folder = r'D:\组内数据汇总\GF2_building'
-    outJson = r'GF2Info.json'
-    InfoDict = GetInfoFromFolder(folder)
-    writeJson(InfoDict,outJson)
+    # folder = r'D:\组内数据汇总\GF2_building'
+    # outJson = r'GF2Info.json'
+    # InfoDict = GetInfoFromFolder(folder)
+    # writeJson(InfoDict,outJson)
+    folder = r'G:\GF2'
+    outJson = r'GF2CompleStat.json'
+    infoDict = GetInfoFromXML_InDir(folder)
+    writeJson(infoDict,outJson)
+
 
 
 

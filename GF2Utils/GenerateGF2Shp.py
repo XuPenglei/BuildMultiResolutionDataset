@@ -78,6 +78,8 @@ def writeRecShpFile(GF2Json, outPath, EPSG=4326):
     print("shp文件生成完成!")
 
 if __name__ == '__main__':
-    GF2Json = r'GF2Info.json'
-    outPath = r'E:\Projects\BuildMultiResolutionDataset\GF2Utils\GF2Shp\GF2Extent.shp'
+    # GF2Json = r'GF2Info.json'
+    # outPath = r'E:\Projects\BuildMultiResolutionDataset\GF2Utils\GF2Shp\GF2Extent.shp'
+    GF2Json = r'F:\Projects\BuildMultiResolutionDataset\GF2Utils\GF2CompleStat.json'
+    outPath = r'F:\Projects\BuildMultiResolutionDataset\GF2Utils\GF2Shp\GF2CompleStat.shp'
     writeRecShpFile(GF2Json,outPath)
