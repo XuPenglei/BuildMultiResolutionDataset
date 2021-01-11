@@ -64,7 +64,7 @@ class RasterProcessor(object):
         else:
             return self.clip(raster,UpperLeftPix,BottomRightPix)
 
-    def resample(self,raster,w=0,h=0,wFactor=None,hFactor=None):
+    def resample(self,raster,w=0,h=0,wFactor=None,hFactor=None,inter=None):
         """
         对栅格数据进行重采样
         :param raster: 输入栅格数据
@@ -74,12 +74,16 @@ class RasterProcessor(object):
         :param hFactor: h重采样比例
         :return: 重采样后的栅格
         """
-        if wFactor is None or hFactor is None:
-            return cv2.resize(raster,(w,h),interpolation=cv2.INTER_CUBIC)
+        if inter is not None:
+            inter_method = inter
         else:
-            return cv2.resize(raster,(0,0),fx=wFactor,fy=hFactor,interpolation=cv2.INTER_CUBIC)
+            inter_method = cv2.INTER_CUBIC
+        if wFactor is None or hFactor is None:
+            return cv2.resize(raster,(w,h),interpolation=inter_method)
+        else:
+            return cv2.resize(raster,(0,0),fx=wFactor,fy=hFactor,interpolation=inter_method)
 
-    def resampleWithGeo(self,raster, geomat, w=0,h=0,wFactor=None,hFactor=None):
+    def resampleWithGeo(self,raster, geomat, w=0,h=0,wFactor=None,hFactor=None,inter=None):
         """
         对栅格进行重采样，同时修改Geomat
         :param raster: 输入栅格数据, Array
@@ -90,7 +94,7 @@ class RasterProcessor(object):
         :param hFactor: h重采样比例
         :return: 重采样之后的栅格和Geomat
         """
-        resample_raster = self.resample(raster,w,h,wFactor,hFactor)
+        resample_raster = self.resample(raster,w,h,wFactor,hFactor,inter)
         old_h,old_w = raster.shape[:2]
         new_h,new_w = resample_raster.shape[:2]
         h_ratio,w_ratio = old_h/new_h, old_w/new_w
