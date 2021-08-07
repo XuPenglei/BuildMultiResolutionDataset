@@ -113,4 +113,41 @@ class RasterProcessor(object):
         """
         return (max-raster)/(max-min)
 
+    def geoReferencing(self,infile,outfile,cp_fn):
+        """
+        栅格几何校正, 结果不大对
+        :param infile: 输入栅格的路径
+        :param outfile: 输出栅格的路径
+        :param cp_fn: 控制点的文件名
+        :return:
+        """
+        def geo2pix(geomat,lng,lat):
+            """
+            :param geomat: 栅格的地理信息，共有6个元素，geomat[0],geomat[3]对应raster左上角坐标,
+                        geomat[1],geomat[5]分别对应lon分辨率和lat分辨率
+            :return:
+            """
+            pixel = (lng-geomat[0])/geomat[1]
+            line = (lat-geomat[3])/geomat[5]
+            return [pixel,line]
+
+        with open(cp_fn,'r') as f:
+            cp_str = f.readlines()
+        cp = [list(map(float,n.replace('\n',' ').split('\t'))) for n in cp_str]
+
+        dataset = gdal.Open(infile, gdal.GA_Update)
+        dataset.FlushCache()
+        proj = dataset.GetProjection()
+        geomat = dataset.GetGeoTransform()
+        gcps_list = [gdal.GCP(p[0],p[1],0,*geo2pix(geomat,p[2],p[3])) for p in cp]
+        dataset.SetGCPs(gcps_list,proj)
+        dataset.FlushCache()
+        dst_ds = gdal.Warp(outfile, dataset, format='GTiff')
+        del dataset, gcps_list
+inp_file = r'C:\Users\XuPenglei\Desktop\temp\GF2\GF2_PMS2_E113.5_N22.2_20150123_L1A0000607681\touying.tif'
+oup_file = r'C:\Users\XuPenglei\Desktop\temp\GF2\GF2_PMS2_E113.5_N22.2_20150123_L1A0000607681\reference.tif'
+cp_fn = r'C:\Users\XuPenglei\Desktop\temp\GF2\澳门_GF2_PMS2_E113.5_N22.2_20150123_L1A0000607681.txt'
+p = RasterProcessor()
+p.geoReferencing(inp_file,oup_file,cp_fn)
+
 

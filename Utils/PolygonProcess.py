@@ -79,6 +79,67 @@ class PolyProcessor(object):
             options=["ATTRIBUTE=DN"]
         )
 
+import shutil
+
+def get_outside(inShp, outputShp, field, fieldValue):
+    driver = ogr.GetDriverByName("ESRI Shapefile")
+    dataSource = driver.Open(inShp, 1)
+    layer = dataSource.GetLayer()
+
+    # 新建DataSource，Layer
+    out_ds = driver.CreateDataSource(outputShp)
+    out_lyr = out_ds.CreateLayer(outputShp, layer.GetSpatialRef(), ogr.wkbPolygon)
+    def_feature = out_lyr.GetLayerDefn()
+
+    for feature in layer:
+        geom = feature.GetGeometryRef()
+        value = feature.GetField(field)
+        if value == fieldValue:
+            out_feature = ogr.Feature(def_feature)
+            out_feature.SetGeometry(geom)
+            out_lyr.CreateFeature(out_feature)
+        out_feature = None
+
+    out_ds.FlushCache()
+    del dataSource, out_ds
+
+
+def intersection(maskShp, toInterShp, fname):
+    driver = ogr.GetDriverByName("ESRI Shapefile")
+    dataSource = driver.Open(maskShp, 1)
+    layer = dataSource.GetLayer()
+
+    RdataSource = driver.Open(toInterShp, 1)
+    Rlayer = RdataSource.GetLayer()
+
+
+    # 新建DataSource，Layer
+    out_ds = driver.CreateDataSource(fname)
+    out_lyr = out_ds.CreateLayer(fname, Rlayer.GetSpatialRef(), ogr.wkbPolygon)
+    def_feature = out_lyr.GetLayerDefn()
+    # 遍历原始的Shapefile文件给每个Geometry做Buffer操作
+    # current_union = layer[0].Clone()
+    print('the length of layer:', len(layer))
+    if len(layer) == 0:
+        return
+
+    for feature in layer:
+        geometry = feature.GetGeometryRef()
+        for Rfeature in Rlayer:
+            Rgeometry = Rfeature.GetGeometryRef()
+            inter = Rgeometry.Intersection(geometry).Clone()
+            out_feature = ogr.Feature(def_feature)
+            out_feature.SetGeometry(inter)
+            out_lyr.ResetReading()
+            out_lyr.CreateFeature(out_feature)
+    del dataSource, RdataSource, out_ds
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     temp_dir = r"F:\Data\2.5TO10\Image91_tif"

@@ -21,6 +21,7 @@ import json
 gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8","NO")
 # 支持中文属性表字段
 gdal.SetConfigOption("SHAPE_ENCODING", "")
+from tqdm import tqdm
 
 def writeRecShpFile(GF2Json, outPath, EPSG=4326):
     """
@@ -56,7 +57,7 @@ def writeRecShpFile(GF2Json, outPath, EPSG=4326):
     oFieldName = ogr.FieldDefn('GridName',ogr.OFTString)
     oFieldName.SetWidth(100)
     oLayer.CreateField(oFieldName,1)
-    for c,(k,v) in enumerate(extentDict.items()):
+    for c,(k,v) in tqdm(enumerate(extentDict.items())):
         for i,j in enumerate(v):
             print('Writing %s %d'%(k,i+1))
             extent = j['WGSExtent']
@@ -76,6 +77,8 @@ def writeRecShpFile(GF2Json, outPath, EPSG=4326):
     print("shp文件生成完成!")
 
 if __name__ == '__main__':
-    Sentinel2Json = r'E:\Projects\BuildMultiResolutionDataset\Sentinel2Utils\Sentinel2Test4.json'
-    outPath = r'F:\Data\GF2withSentinel2\Sentinel2Test4_New.shp'
+    # Sentinel2Json = r'E:\Projects\BuildMultiResolutionDataset\Sentinel2Utils\Sentinel2Test4.json'
+    # outPath = r'F:\Data\GF2withSentinel2\Sentinel2Test4_New.shp'
+    Sentinel2Json = r'F:\Projects\BuildMultiResolutionDataset\GF2Utils\GF2_georeferenced.json'
+    outPath = r'F:\Projects\BuildMultiResolutionDataset\GF2Utils\GF2Shp\GF2_georeferenced.shp'
     writeRecShpFile(Sentinel2Json,outPath)

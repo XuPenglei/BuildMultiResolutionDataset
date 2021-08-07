@@ -11,6 +11,7 @@ from osgeo import gdal,ogr,osr
 import json
 from glob import glob
 import os
+from tqdm import tqdm
 
 def writeJson(data,path):
     with open(path,'w') as f:
@@ -61,7 +62,7 @@ def GetInfoFromFolder(folder):
     """
     dirList = [d for d in os.listdir(folder) if d.split('.')[-1]=='tif']
     infoDict = {}
-    for d in dirList:
+    for d in tqdm(dirList):
         city = d.split('.')[0]
         tifPath = os.path.join(folder,d)
         data = gdal.Open(tifPath)
@@ -81,6 +82,8 @@ def GetInfoFromFolder(folder):
 if __name__ == '__main__':
     folder = r'F:\Data\ZT_SRDataset\四个定量精度评价区\IMG2p5'
     outJson = r'Sentinel2Test4.json'
+    # folder = r'H:\MultiRsSrcDataset\GF2proj_back'
+    # outJson = r'GF2_georeferenced.json'
     InfoDict = GetInfoFromFolder(folder)
     writeJson(InfoDict,outJson)
 
